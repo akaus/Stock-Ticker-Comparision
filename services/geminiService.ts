@@ -25,8 +25,7 @@ export const getStockPriceData = async (primaryTicker: string, secondaryTicker: 
     1.  **Accuracy is paramount.** The prices must match a reliable financial source like Google Finance or Yahoo Finance.
     2.  **Complete Date Range:** You must return a data point for *every single calendar day* between ${startDate} and ${endDate}, inclusive.
     3.  **Handling Non-Trading Days:** For any day that is not a trading day (e.g., a weekend or a public holiday), the price for that day must be the closing price from the most recent previous trading day. For example, the price for a Saturday and Sunday should be the same as the closing price from the preceding Friday.
-    4.  **No Hallucinations:** If you cannot find reliable, continuous daily data for the *entire* requested period for any ticker, you MUST return an error message. Do not invent or estimate data points.
-
+  
     Your entire response must be a single, clean JSON object with no other text or markdown.
 
     -   If data is found, the JSON object will have a single key "prices", containing an array of objects. Each object must have a "date" (YYYY-MM-DD) and a "price_primary" (number) ${secondaryTickerSchemaDescription}.
@@ -102,8 +101,7 @@ export const getPredictionData = async (primaryTicker: string, secondaryTicker: 
     1.  **News Analysis:** Use your search tool to find the most significant news about the company associated with ticker ${primaryTicker}${secondaryTickerAnalysis} (e.g., if the ticker is 'SYM', search for news about 'Symbotic Inc.') from the last 7 days.
     2.  **Summarize Impact:** Write a concise, one-paragraph analysis summarizing the news and its likely impact (e.g., bullish, bearish, neutral) on the stock(s). This analysis should be insightful and easy to understand for a non-expert.
     3.  **Predict Prices:** Based on the historical trend and your news analysis, provide a JSON array of predicted daily closing prices for the next ${predictionDays} days. The prediction must start from the day after the last historical data point.
-    4.  **No Hallucinations:** If you cannot find any relevant news, state that in your analysis and base your prediction solely on the historical trend.
-
+  
     Your entire response MUST be a single, clean JSON object with no other text or markdown. The object must have two keys:
     - "analysis": A string containing your summary from Step 2.
     - "predictions": An array of objects. Each object must contain a "date" (YYYY-MM-DD), a "price_primary" (the predicted price for ${primaryTicker}) ${secondaryTickerPrediction}.

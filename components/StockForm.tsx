@@ -5,25 +5,76 @@ interface StockFormProps {
   isLoading: boolean;
 }
 
+const getLocalDateString = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getInitialToday = (): string => getLocalDateString(new Date());
+
+const getInitialOneMonthAgo = (): string => {
+  const d = new Date();
+  d.setMonth(d.getMonth() - 1);
+  return getLocalDateString(d);
+};
+
 const StockForm: React.FC<StockFormProps> = ({ onFetchData, isLoading }) => {
   const [primaryTicker, setPrimaryTicker] = useState('GOOG');
   const [secondaryTicker, setSecondaryTicker] = useState('');
   const [predictionDays, setPredictionDays] = useState('7');
   
-  const today = new Date();
-  const oneMonthAgo = new Date();
-  oneMonthAgo.setMonth(today.getMonth() - 1);
-
-  const formatDate = (date: Date) => date.toISOString().split('T')[0];
-
-  const [startDate, setStartDate] = useState(formatDate(oneMonthAgo));
-  const [endDate, setEndDate] = useState(formatDate(today));
+  const [dateRange, setDateRange] = useState({
+    start: getInitialOneMonthAgo(),
+    end: getInitialToday(),
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (primaryTicker && startDate && endDate) {
-      onFetchData(primaryTicker.toUpperCase(), secondaryTicker.toUpperCase(), startDate, endDate, predictionDays);
+    if (primaryTicker && dateRange.start && dateRange.end) {
+      onFetchData(primaryTicker.toUpperCase(), secondaryTicker.toUpperCase(), dateRange.start, dateRange.end, predictionDays);
     }
+  };
+
+  const todayStr = getInitialToday();
+
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newStartDate = e.target.value;
+    setDateRange(prevRange => {
+      const today = getInitialToday();
+      
+      let validatedStart = newStartDate;
+      if (validatedStart > today) {
+        validatedStart = today;
+      }
+
+      let validatedEnd = prevRange.end;
+      if (validatedStart > validatedEnd) {
+        validatedEnd = validatedStart;
+      }
+
+      return { start: validatedStart, end: validatedEnd };
+    });
+  };
+
+  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEndDate = e.target.value;
+    setDateRange(prevRange => {
+      const today = getInitialToday();
+
+      let validatedEnd = newEndDate;
+      if (validatedEnd > today) {
+        validatedEnd = today;
+      }
+
+      let validatedStart = prevRange.start;
+      if (validatedEnd < validatedStart) {
+        validatedStart = validatedEnd;
+      }
+      
+      return { start: validatedStart, end: validatedEnd };
+    });
   };
 
   return (
@@ -57,9 +108,9 @@ const StockForm: React.FC<StockFormProps> = ({ onFetchData, isLoading }) => {
           <input
             id="start-date"
             type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            max={endDate}
+            value={dateRange.start}
+            onChange={handleStartDateChange}
+            max={todayStr}
             className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition"
             required
           />
@@ -69,10 +120,10 @@ const StockForm: React.FC<StockFormProps> = ({ onFetchData, isLoading }) => {
           <input
             id="end-date"
             type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            min={startDate}
-            max={formatDate(today)}
+            value={dateRange.end}
+            onChange={handleEndDateChange}
+            min={dateRange.start}
+            max={todayStr}
             className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition"
             required
           />

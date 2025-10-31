@@ -1,14 +1,14 @@
-
 import React, { useState } from 'react';
 
 interface StockFormProps {
-  onFetchData: (primaryTicker: string, secondaryTicker: string, startDate: string, endDate: string) => void;
+  onFetchData: (primaryTicker: string, secondaryTicker: string, startDate: string, endDate: string, predictionDays: string) => void;
   isLoading: boolean;
 }
 
 const StockForm: React.FC<StockFormProps> = ({ onFetchData, isLoading }) => {
   const [primaryTicker, setPrimaryTicker] = useState('GOOG');
   const [secondaryTicker, setSecondaryTicker] = useState('');
+  const [predictionDays, setPredictionDays] = useState('7');
   
   const today = new Date();
   const oneMonthAgo = new Date();
@@ -22,13 +22,13 @@ const StockForm: React.FC<StockFormProps> = ({ onFetchData, isLoading }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (primaryTicker && startDate && endDate) {
-      onFetchData(primaryTicker.toUpperCase(), secondaryTicker.toUpperCase(), startDate, endDate);
+      onFetchData(primaryTicker.toUpperCase(), secondaryTicker.toUpperCase(), startDate, endDate, predictionDays);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-6 bg-gray-800/50 rounded-lg shadow-xl backdrop-blur-sm border border-gray-700 w-full max-w-4xl">
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+    <form onSubmit={handleSubmit} className="p-6 bg-gray-800/50 rounded-lg shadow-xl backdrop-blur-sm border border-gray-700 w-full max-w-5xl">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
         <div className="md:col-span-1">
           <label htmlFor="primary-ticker" className="block text-sm font-medium text-gray-300 mb-1">Primary Ticker</label>
           <input
@@ -36,7 +36,7 @@ const StockForm: React.FC<StockFormProps> = ({ onFetchData, isLoading }) => {
             type="text"
             value={primaryTicker}
             onChange={(e) => setPrimaryTicker(e.target.value)}
-            placeholder="Enter Ticker..."
+            placeholder="e.g., GOOG"
             className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition"
             required
           />
@@ -59,6 +59,7 @@ const StockForm: React.FC<StockFormProps> = ({ onFetchData, isLoading }) => {
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
+            max={endDate}
             className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition"
             required
           />
@@ -70,6 +71,21 @@ const StockForm: React.FC<StockFormProps> = ({ onFetchData, isLoading }) => {
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
+            min={startDate}
+            max={formatDate(today)}
+            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition"
+            required
+          />
+        </div>
+         <div className="md:col-span-1">
+          <label htmlFor="prediction-days" className="block text-sm font-medium text-gray-300 mb-1">Prediction Days</label>
+          <input
+            id="prediction-days"
+            type="number"
+            value={predictionDays}
+            min="0"
+            max="30"
+            onChange={(e) => setPredictionDays(e.target.value)}
             className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition"
             required
           />

@@ -1,0 +1,5 @@
+{
+  "name": "Gemini Stock Price Visualizer",
+  "description": "An application that takes a stock ticker and a date range, then uses the Gemini API to fetch and display the daily stock prices on an interactive chart.",
+  "requestFramePermissions": []
+}

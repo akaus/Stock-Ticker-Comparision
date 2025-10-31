@@ -1,3 +1,4 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { StockDataPoint } from '../types';
 
@@ -13,21 +14,35 @@ export const getStockPriceData = async (primaryTicker: string, secondaryTicker: 
     : '';
   
   const secondaryTickerSchemaDescription = secondaryTicker
-    ? `- "price_secondary" (the closing price for ${secondaryTicker})`
-    : 'Do not include a "price_secondary" field.';
+    ? `- "price_secondary" (a number representing the closing price for ${secondaryTicker})`
+    : '';
 
   const prompt = `
-    Provide the daily closing price for the primary stock ticker "${primaryTicker}" ${secondaryTickerPrompt} for each day from ${startDate} to ${endDate}.
-    It is crucial that you return a data point for *every single day* in the range, including weekends and holidays.
-    For any non-trading day (like a weekend or holiday), please use the closing price from the most recent previous trading day.
-    
-    Return ONLY a single JSON object with a key "prices". The value of "prices" should be an array of objects.
-    Each object in the array must contain:
-    - "date" (in YYYY-MM-DD format)
-    - "price_primary" (the closing price for ${primaryTicker})
-    ${secondaryTickerSchemaDescription}
-    
-    Do not include any other text, explanations, or markdown formatting outside of the single JSON object. Your entire response should be only the raw JSON.
+    Your primary task is to act as a financial data API. You must use search to get accurate, real-world historical stock data.
+
+    For the primary stock ticker "${primaryTicker}" ${secondaryTickerPrompt}, provide a continuous daily closing price series from ${startDate} to ${endDate}.
+
+    Follow these rules precisely:
+    1.  **Accuracy is paramount.** The prices must match a reliable financial source like Google Finance or Yahoo Finance.
+    2.  **Complete Date Range:** You must return a data point for *every single calendar day* between ${startDate} and ${endDate}, inclusive.
+    3.  **Handling Non-Trading Days:** For any day that is not a trading day (e.g., a weekend or a public holiday), the price for that day must be the closing price from the most recent previous trading day. For example, the price for a Saturday and Sunday should be the same as the closing price from the preceding Friday.
+
+    Your entire response must be a single, clean JSON object with no other text or markdown.
+
+    -   If data is found, the JSON object will have a single key "prices", containing an array of objects. Each object must have a "date" (YYYY-MM-DD) and a "price_primary" (number). ${secondaryTickerSchemaDescription}
+    -   If data for a ticker cannot be found for the given dates (e.g., pre-IPO), the JSON object will have a single key "error", with a string explaining the issue. Example: {"error": "Data for ticker HOOD is not available prior to its IPO in July 2021."}
+
+    Example for a single ticker (GOOG) from 2023-10-06 to 2023-10-09:
+    Assuming Friday Oct 6 closing price was 138.68 and Monday Oct 9 closing price was 139.50.
+    Your response for "prices" would include:
+    [
+      { "date": "2023-10-06", "price_primary": 138.68 },
+      { "date": "2023-10-07", "price_primary": 138.68 },
+      { "date": "2023-10-08", "price_primary": 138.68 },
+      { "date": "2023-10-09", "price_primary": 139.50 }
+    ]
+
+    Do not deviate from this format. Your response must start with "{" and end with "}".
   `;
 
   try {
@@ -39,21 +54,30 @@ export const getStockPriceData = async (primaryTicker: string, secondaryTicker: 
       },
     });
 
-    // The model might wrap the JSON in ```json ... ```, so we need to clean it.
-    let jsonText = response.text.trim();
-    if (jsonText.startsWith('```json')) {
-      jsonText = jsonText.substring(7, jsonText.length - 3).trim();
-    } else if (jsonText.startsWith('```')) {
-      jsonText = jsonText.substring(3, jsonText.length - 3).trim();
+    let rawText = response.text;
+    
+    // Find the start and end of the JSON object within the raw text response
+    const startIndex = rawText.indexOf('{');
+    // FIX: The original code used 'raw' which is not defined. Changed to 'rawText'.
+    const endIndex = rawText.lastIndexOf('}');
+    
+    if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
+        throw new Error(`Could not find a valid JSON object in the model's response. Received: ${rawText}`);
     }
     
+    const jsonText = rawText.substring(startIndex, endIndex + 1);
+    
     const parsedJson = JSON.parse(jsonText);
+
+    if (parsedJson.error) {
+        throw new Error(parsedJson.error);
+    }
 
     if (parsedJson && Array.isArray(parsedJson.prices)) {
       // Sort data by date just in case the model doesn't return it in order
       return parsedJson.prices.sort((a: StockDataPoint, b: StockDataPoint) => new Date(a.date).getTime() - new Date(b.date).getTime());
     } else {
-      throw new Error("Invalid data structure received from API. Expected a 'prices' array.");
+      throw new Error("Invalid data structure received from API. Expected a 'prices' array or an 'error' message.");
     }
   } catch (error) {
     console.error("Error fetching stock data from Gemini API:", error);

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 
 interface StockFormProps {
@@ -7,7 +8,7 @@ interface StockFormProps {
 
 const StockForm: React.FC<StockFormProps> = ({ onFetchData, isLoading }) => {
   const [primaryTicker, setPrimaryTicker] = useState('GOOG');
-  const [secondaryTicker, setSecondaryTicker] = useState('MSFT');
+  const [secondaryTicker, setSecondaryTicker] = useState('');
   
   const today = new Date();
   const oneMonthAgo = new Date();
@@ -35,7 +36,7 @@ const StockForm: React.FC<StockFormProps> = ({ onFetchData, isLoading }) => {
             type="text"
             value={primaryTicker}
             onChange={(e) => setPrimaryTicker(e.target.value)}
-            placeholder="e.g., AAPL"
+            placeholder="Enter Ticker..."
             className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition"
             required
           />
@@ -47,7 +48,7 @@ const StockForm: React.FC<StockFormProps> = ({ onFetchData, isLoading }) => {
             type="text"
             value={secondaryTicker}
             onChange={(e) => setSecondaryTicker(e.target.value)}
-            placeholder="e.g., MSFT (Optional)"
+            placeholder="Optional..."
             className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition"
           />
         </div>
